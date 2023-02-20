@@ -7,9 +7,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
-from .Mean.Facade import Facade
-from .Mean.MyMean import MyMean
-from .Mean.NumpyMean import NumpyMean
+from .BusnesLayer.Facade import Facade
+from .BusnesLayer.MyMean import MyMean
+from .BusnesLayer.NumpyMean import NumpyMean
 
 
 class TestTaskViewSet(ViewSet):
@@ -17,11 +17,11 @@ class TestTaskViewSet(ViewSet):
     @action(methods=['post'], detail=False, url_path='numpy')
     def numpy_resolve(self, request):
         facade = Facade(request.data, NumpyMean())
-        response = facade.run()
+        response = facade.calculate_means()
         return Response(response)
 
     @action(methods=['post'], detail=False, url_path='my')
     def my_resolve(self, request):
         facade = Facade(request.data, MyMean())
-        response = facade.run()
+        response = facade.calculate_means()
         return Response(response)
