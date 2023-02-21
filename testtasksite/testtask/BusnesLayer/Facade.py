@@ -1,33 +1,34 @@
 import numpy as np
 
+from .TimeSpanPrices import TimeSpanPrices
 from .Mean import Mean
-from .Gap import GapFormatter
+from .Gap import GapGenerator
 
 
 class Facade:
-    output_date_format: str = '%Y-%m-%dT%H:%M:%SZ'
 
-    def __init__(self, json_data, mean_calculator: Mean):
-        self.__json = json_data
+    def __init__(self, timespan_prices: TimeSpanPrices, mean_calculator: Mean):
+        self.__timespan_prices = timespan_prices
+        self.__target = self.__timespan_prices.get_target()
+        self.gap_generator = GapGenerator(timespan_prices)
         self.__mean_calculator = mean_calculator
-        self.gap_generator = GapFormatter(json_data)
-        self.__target = self.gap_generator.get_target()
         self.__mean_calculator.target = self.__target
 
     def calculate_means(self):
         gaps = self.gap_generator.generate()
-        dataset = self.gap_generator.get_dataset()
-        needed_time = self.gap_generator.get_datefrom().time()
 
-        res_list = list()
+        result_list = list()
+        dataset = self.__timespan_prices.get_dataset()
+        needed_time = self.__timespan_prices.get_date_from().time()
+        output_date_format = self.__timespan_prices.get_output_date_format()
         for gap in gaps[0::1]:
             self.__mean_calculator.data = dataset[gap.StartInd: gap.EndInd]
-            date = gap.DateFrom.replace(hour=needed_time.hour, minute=needed_time.minute, second=needed_time.second)
-            res_list.append({"date": date.strftime(self.output_date_format),
-                             self.__target: self.__mean_calculator.compute()})
+            output_date = gap.DateFrom.replace(hour=needed_time.hour, minute=needed_time.minute, second=needed_time.second)
+            result_list.append({"date": output_date.strftime(output_date_format),
+                                self.__target: self.__mean_calculator.compute()})
 
-        self.__post_processing(res_list)
-        return res_list
+        self.__post_processing(result_list)
+        return result_list
 
 
 
